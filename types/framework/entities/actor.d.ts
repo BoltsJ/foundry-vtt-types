@@ -109,7 +109,7 @@ declare class Actors extends EntityCollection<Actor> {
  */
 declare class Actor<
   D extends Actor.Data = Actor.Data,
-  I extends Item<Actor.OwnedItemData<D>> = Item<Actor.OwnedItemData<D>>
+  I extends Item<D['items'][number]> = Item<D['items'][number]>
 > extends Entity<D> {
   constructor(data?: DeepPartial<D>, options?: Entity.CreateOptions);
 
@@ -198,7 +198,7 @@ declare class Actor<
    * @param items - The raw array of item objects
    * @returns The prepared owned items collection
    */
-  protected _prepareOwnedItems(items: Array<Actor.OwnedItemData<D>>): Collection<I>;
+  protected _prepareOwnedItems(items: Array<I['data']>): Collection<I>;
 
   /**
    * Prepare a Collection of ActiveEffect instances which belong to this Actor.
@@ -298,11 +298,7 @@ declare class Actor<
   protected _onUpdate(data: DeepPartial<D>, options: Entity.UpdateOptions, userId: string, context?: any): void;
 
   /** @override */
-  createEmbeddedEntity(
-    embeddedName: 'OwnedItem',
-    data: DeepPartial<Actor.OwnedItemData<D>>,
-    options?: any
-  ): Promise<Actor.OwnedItemData<D>>;
+  createEmbeddedEntity(embeddedName: 'OwnedItem', data: DeepPartial<I['data']>, options?: any): Promise<I['data']>;
 
   /** @override */
   createEmbeddedEntity(
@@ -318,20 +314,20 @@ declare class Actor<
    * @returns An array of effects to transfer to the Actor
    */
   protected _createItemActiveEffects(
-    created: Actor.OwnedItemData<D> | Array<Actor.OwnedItemData<D>>,
+    created: I['data'] | Array<I['data']>,
     { temporary }?: { temporary?: boolean }
   ): Promise<ActiveEffect.Data[] | ActiveEffect.Data | undefined>;
 
   /** @override */
   protected _onCreateEmbeddedEntity(
     embeddedName: string,
-    child: Actor.OwnedItemData<D> | ActiveEffect.Data,
+    child: I['data'] | ActiveEffect.Data,
     options: any,
     userId: string
   ): void;
 
   /** @override */
-  deleteEmbeddedEntity(embeddedName: 'OwnedItem', data: string, options?: any): Promise<Actor.OwnedItemData<D>>;
+  deleteEmbeddedEntity(embeddedName: 'OwnedItem', data: string, options?: any): Promise<I['data']>;
 
   /** @override */
   deleteEmbeddedEntity(embeddedName: 'ActiveEffect', data: string, options?: any): Promise<ActiveEffect.Data>;
@@ -341,13 +337,13 @@ declare class Actor<
    * @param deleted - The array of deleted owned Item data
    */
   protected _deleteItemActiveEffects(
-    deleted: Actor.OwnedItemData<D> | Array<Actor.OwnedItemData<D>>
+    deleted: I['data'] | Array<I['data']>
   ): Promise<ActiveEffect.Data | ActiveEffect.Data[] | undefined>;
 
   /** @override */
   protected _onDeleteEmbeddedEntity(
     embeddedName: string,
-    child: Actor.OwnedItemData<D> | ActiveEffect.Data,
+    child: I['data'] | ActiveEffect.Data,
     options: any,
     userId: string
   ): void;
@@ -355,7 +351,7 @@ declare class Actor<
   /** @override */
   protected _onModifyEmbeddedEntity(
     embeddedName: string,
-    changes: Array<Actor.OwnedItemData<D>> | ActiveEffect.Data[],
+    changes: Array<I['data']> | ActiveEffect.Data[],
     options: any,
     userId: string,
     context?: any
@@ -381,8 +377,8 @@ declare class Actor<
    * @param renderSheet - Render the Item sheet for the newly created item data
    * @returns A Promise resolving to the created Owned Item data
    */
-  createOwnedItem(itemData: DeepPartial<Actor.OwnedItemData<D>>, options?: any): Promise<Actor.OwnedItemData<D>>;
-  createOwnedItem(itemData: DeepPartial<Actor.OwnedItemData<D>>[], options?: any): Promise<Actor.OwnedItemData<D>[]>;
+  createOwnedItem(itemData: DeepPartial<I['data']>, options?: any): Promise<I['data']>;
+  createOwnedItem(itemData: DeepPartial<I['data']>[], options?: any): Promise<I['data']>;
 
   /**
    * Update an owned item using provided new data. This redirects its arguments to the updateEmbeddedEntity method.
@@ -392,14 +388,8 @@ declare class Actor<
    * @param options  - Item update options
    * @returns A Promise resolving to the updated Owned Item data
    */
-  updateOwnedItem(
-    itemData: DeepPartial<Actor.OwnedItemData<D>>,
-    options?: any
-  ): Promise<ActiveEffect | Actor.OwnedItemData<D>>;
-  updateOwnedItem(
-    itemData: DeepPartial<Actor.OwnedItemData<D>>[],
-    options?: any
-  ): Promise<Array<ActiveEffect | Actor.OwnedItemData<D>>>;
+  updateOwnedItem(itemData: DeepPartial<I['data']>, options?: any): Promise<ActiveEffect | I['data']>;
+  updateOwnedItem(itemData: DeepPartial<I['data']>[], options?: any): Promise<Array<ActiveEffect | I['data']>>;
 
   /* -------------------------------------------- */
 
@@ -411,8 +401,8 @@ declare class Actor<
    * @param options - Item deletion options
    * @returns A Promise resolving to the deleted Owned Item data
    */
-  deleteOwnedItem(itemId: string, options?: any): Promise<ActiveEffect | Actor.OwnedItemData<D>>;
-  deleteOwnedItem(itemId: string[], options?: any): Promise<Array<ActiveEffect | Actor.OwnedItemData<D>>>;
+  deleteOwnedItem(itemId: string, options?: any): Promise<ActiveEffect | I['data']>;
+  deleteOwnedItem(itemId: string[], options?: any): Promise<Array<ActiveEffect | I['data']>>;
 
   /* -------------------------------------------- */
   /*  DEPRECATED                                  */
@@ -432,15 +422,8 @@ declare class Actor<
 
 declare namespace Actor {
   /**
-   * Full item type for owned items
-   * @typeParam D - Actor.Data to extract Item type from
-   * @internal
-   */
-  type OwnedItemData<D extends Data> = D['items'][0];
-
-  /**
    * @typeParam D - Type for `data.data`
-   * @typeParam I - Type for system's Item
+   * @typeParam I - Data type for system's Item
    */
   interface Data<D = any, I extends Item.Data = Item.Data> extends Entity.Data {
     data: D;
